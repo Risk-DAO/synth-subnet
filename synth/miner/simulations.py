@@ -85,6 +85,7 @@ def generate_simulations(
         if not is_timestamp_recent(btc_json["timestamp"]):
             sigma = default_sigma * 1
         sigma = sigma * 0.75
+    print(f"asset {asset}, sigma {sigma}, jsons {eth_json}, {btc_json}")
             
     simulations = simulate_crypto_price_paths(
         current_price=current_price,
