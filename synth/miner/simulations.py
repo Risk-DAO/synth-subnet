@@ -70,6 +70,7 @@ def generate_simulations(
         raise ValueError(f"Failed to fetch current price for asset: {asset}")
     eth_json = fetch_volatility("ETH")
     btc_json = fetch_volatility("BTC")
+    xau_json = fetch_volatility("PAXG")
     default_sigma = sigma = 0.003
     sqrt24 = math.sqrt(24)
     if asset == "BTC":
@@ -81,10 +82,9 @@ def generate_simulations(
         if not is_timestamp_recent(eth_json["timestamp"]):
             sigma = default_sigma * 2
     elif asset == "XAU":
-        sigma = float(btc_json["simple_avg_vol"]) / sqrt24
-        if not is_timestamp_recent(btc_json["timestamp"]):
+        sigma = float(xau_json["simple_avg_vol"]) / sqrt24
+        if not is_timestamp_recent(xau_json["timestamp"]):
             sigma = default_sigma * 1
-        sigma = sigma * 0.75
     print(f"asset {asset}, sigma {sigma}, jsons {eth_json}, {btc_json}")
             
     simulations = simulate_crypto_price_paths(
