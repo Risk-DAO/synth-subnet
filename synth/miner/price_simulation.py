@@ -4,6 +4,8 @@ import requests
 import numpy as np
 
 
+# Hermes Pyth API documentation: https://hermes.pyth.network/docs/
+
 TOKEN_MAP = {
     "BTC": "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
     "ETH": "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
