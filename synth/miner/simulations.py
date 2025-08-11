@@ -72,8 +72,9 @@ def generate_simulations(
     default_sigma = sigma = 0.003
     sqrt24 = math.sqrt(24)
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
+    sigma = float(sigma) * 0.95    
     if not is_timestamp_recent(xxx_json["timestamp"]):
-        sigma = default_sigma * 1    
+        sigma = default_sigma * 1
     print(f"asset {asset}, sigma {sigma}, jsons {xxx_json}")
             
     simulations = simulate_crypto_price_paths(
