@@ -47,6 +47,7 @@ def generate_simulations(
     time_length=86400,
     num_simulations=1,
     sigma=0.01,
+    hot_key="xxx"
 ):
     """
     Generate simulated price paths.
@@ -72,7 +73,9 @@ def generate_simulations(
     default_sigma = sigma = 0.003
     sqrt24 = math.sqrt(24)
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
-    sigma = float(sigma) * 0.95    
+    sigma = float(sigma) * 0.95
+    if hot_key == "5EAYBxtPhkVgkoyW6rAYTLhiM3Rbv8s32oaxeEK6QbD5Z4Ld":
+        sigma = float(sigma) * 0.95
     if not is_timestamp_recent(xxx_json["timestamp"]):
         sigma = default_sigma * 1
     print(f"asset {asset}, sigma {sigma}, jsons {xxx_json}")
