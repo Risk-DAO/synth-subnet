@@ -45,6 +45,12 @@ class Miner(BaseMinerNeuron):
             f"Received prediction request from: {synapse.dendrite.hotkey} for timestamp: {simulation_input.start_time}"
         )
 
+        hot_key=self.wallet.hotkey.ss58_address
+        
+        bt.logging.info(
+            f"miner {hotkey}"
+        )        
+
         synapse.simulation_output = generate_simulations(
             asset=simulation_input.asset,
             start_time=simulation_input.start_time,
@@ -52,6 +58,7 @@ class Miner(BaseMinerNeuron):
             time_length=simulation_input.time_length,
             num_simulations=simulation_input.num_simulations,
             sigma=self.config.simulation.sigma,  # Standard deviation of the simulated price path
+            hot_key=hot_key
         )
 
         return synapse
