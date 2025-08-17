@@ -75,6 +75,7 @@ def generate_simulations(
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
     sigma = float(sigma) * 0.95
     if hot_key == "5EAYBxtPhkVgkoyW6rAYTLhiM3Rbv8s32oaxeEK6QbD5Z4Ld":
+        print("lower sigma again")
         sigma = float(sigma) * 0.95
     if not is_timestamp_recent(xxx_json["timestamp"]):
         sigma = default_sigma * 1
