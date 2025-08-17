@@ -48,7 +48,7 @@ class Miner(BaseMinerNeuron):
         hot_key=self.wallet.hotkey.ss58_address
         
         bt.logging.info(
-            f"miner {hotkey}"
+            f"miner {hot_key}"
         )        
 
         synapse.simulation_output = generate_simulations(
