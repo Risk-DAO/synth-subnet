@@ -76,7 +76,14 @@ def generate_simulations(
     sigma = float(sigma) * 0.95
     if hot_key == "5EAYBxtPhkVgkoyW6rAYTLhiM3Rbv8s32oaxeEK6QbD5Z4Ld":
         print("lower sigma again")
-        sigma = float(sigma) * 0.95
+        sigma = float(sigma) * 0.95 # 0.9
+    if hot_key == "5EbbNM6JBtKVF7gwdW3fcp78J2EQYx1Y3Gg8wwZhhcPHNme7":
+        print("0.925 again")
+        sigma = float(sigma) * 0.95 * 1.025 # 0.925        
+    if hot_key == "5HoviLrfGLJC1N2dKhuqxb33PP57v5tSg9zNd59xFZoCdymY":
+        print("0.975 again")
+        sigma = float(sigma) * 1.025 # 0.975
+        
     if not is_timestamp_recent(xxx_json["timestamp"]):
         sigma = default_sigma * 1
     print(f"asset {asset}, sigma {sigma}, jsons {xxx_json}")
