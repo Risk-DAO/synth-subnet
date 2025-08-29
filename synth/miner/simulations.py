@@ -83,7 +83,11 @@ def generate_simulations(
     if hot_key == "5HoviLrfGLJC1N2dKhuqxb33PP57v5tSg9zNd59xFZoCdymY":
         print("0.975 again")
         sigma = float(sigma) * 1.025 # 0.975
-        
+    if hot_key == "5H9RWmJ48VHXxYJidKa8qGvYCHuyxGyUqisGSbbHakB14oqq":
+        print("0.875 again")
+        sigma = float(sigma) * 0.95 / 1.025 # 0.875
+
+    
     if not is_timestamp_recent(xxx_json["timestamp"]):
         sigma = default_sigma * 1
     print(f"asset {asset}, sigma {sigma}, jsons {xxx_json}")
