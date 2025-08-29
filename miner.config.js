@@ -44,6 +44,24 @@ module.exports = {
       env: {
         PYTHONPATH: ".",
       },
+    },
+    {
+      name: "miner6",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--netuid 50 --logging.debug --logging.trace --wallet.name miner --wallet.hotkey miner_6 --axon.port 8096 --blacklist.force_validator_permit true --blacklist.validator_min_stake 1",
+      env: {
+        PYTHONPATH: ".",
+      },
+    },
+    {
+      name: "miner7",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--netuid 50 --logging.debug --logging.trace --wallet.name miner --wallet.hotkey miner_7 --axon.port 8097 --blacklist.force_validator_permit true --blacklist.validator_min_stake 1",
+      env: {
+        PYTHONPATH: ".",
+      },
     },    
   ],
 };
