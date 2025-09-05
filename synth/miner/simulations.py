@@ -73,7 +73,7 @@ def generate_simulations(
     default_sigma = sigma = 0.003
     sqrt24 = math.sqrt(24)
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
-    sigma = float(sigma) * 0.95
+    sigma = float(sigma) * 0.95 * 0.85
     if hot_key == "5EAYBxtPhkVgkoyW6rAYTLhiM3Rbv8s32oaxeEK6QbD5Z4Ld":
         print("lower sigma again")
         sigma = float(sigma) * 0.95 # 0.9
