@@ -45,7 +45,7 @@ def fetch_spyros_volatility(asset_name):
         return None
         
 def use_spyros(hot_key, asset):
-    spyros_keys = ["xxx"]
+    spyros_keys = ["5Hj5DvTSXoUWMga4HzJrw3EZYrbF2S6zeRVVEWeKouL73LkB", "5HT6iGZ8KBJLifhEpWwfV8ZfoFjz1tPoaBEydvoJvMsnYZsy"]
     if asset == "SOL":
         return False
 
