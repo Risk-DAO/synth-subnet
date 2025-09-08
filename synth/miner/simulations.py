@@ -25,6 +25,33 @@ def fetch_volatility(asset_name):
     except ValueError as e:
         print(f"Error parsing JSON: {e}")
         return None
+        
+def fetch_spyros_volatility(asset_name):
+    url = "https://spryus-c19399f53837.herokuapp.com/volatility"
+    params = {"asset": asset_name}
+    if asset_name == "XAU":
+        params[asset] = "PAXG"
+    
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()  # raises HTTPError for status codes >= 400
+        data = response.json()
+        return data
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data: {e}")
+        return None
+    except ValueError as e:
+        print(f"Error parsing JSON: {e}")
+        return None
+        
+def use_spyros(hot_key, asset):
+    spyros_keys = ["xxx"]
+    if asset == "SOL":
+        return False
+
+    return hot_key in spyros_keys
+
+    
 
 def is_timestamp_recent(timestamp_str, max_age_hours=2):
     """
@@ -70,10 +97,17 @@ def generate_simulations(
     if current_price is None:
         raise ValueError(f"Failed to fetch current price for asset: {asset}")
     xxx_json = fetch_volatility(asset)
+    spyros_json = fetch_spyros_volatility(asset)
     default_sigma = sigma = 0.003
     sqrt24 = math.sqrt(24)
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
+    spyros_sigma = float(xxx_json["smoothed_1d_vol_per_day"]) / sqrt24
+
+    if use_spyros(hot_key, asset):
+        sigma = spyros_sigma
+    
     sigma = float(sigma) * 0.95 * 1
+    
     if hot_key == "5EAYBxtPhkVgkoyW6rAYTLhiM3Rbv8s32oaxeEK6QbD5Z4Ld":
         print("lower sigma again")
         sigma = float(sigma) * 0.95 # 0.9
