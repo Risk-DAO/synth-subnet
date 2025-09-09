@@ -97,13 +97,13 @@ def generate_simulations(
     if current_price is None:
         raise ValueError(f"Failed to fetch current price for asset: {asset}")
     xxx_json = fetch_volatility(asset)
-    spyros_json = fetch_spyros_volatility(asset)
     default_sigma = sigma = 0.003
     sqrt24 = math.sqrt(24)
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
-    spyros_sigma = float(spyros_json["smoothed_1d_vol_per_day"]) / sqrt24
 
     if use_spyros(hot_key, asset):
+        spyros_json = fetch_spyros_volatility(asset)        
+        spyros_sigma = float(spyros_json["smoothed_1d_vol_per_day"]) / sqrt24
         sigma = spyros_sigma
     
     sigma = float(sigma) * 0.95 * 1
