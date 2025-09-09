@@ -130,7 +130,7 @@ def generate_simulations(
     
     if not is_timestamp_recent(xxx_json["timestamp"]):
         sigma = default_sigma * 1
-    print(f"asset {asset}, sigma {sigma}, jsons {xxx_json}")
+    print(f"asset {asset}, sigma {sigma}, jsons {xxx_json}, hot key {hot_key}, spyros json {spyros_json}")
             
     simulations = simulate_crypto_price_paths(
         current_price=current_price,
