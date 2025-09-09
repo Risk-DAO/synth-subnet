@@ -101,7 +101,7 @@ def generate_simulations(
     default_sigma = sigma = 0.003
     sqrt24 = math.sqrt(24)
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
-    spyros_sigma = float(xxx_json["smoothed_1d_vol_per_day"]) / sqrt24
+    spyros_sigma = float(spyros_json["smoothed_1d_vol_per_day"]) / sqrt24
 
     if use_spyros(hot_key, asset):
         sigma = spyros_sigma
