@@ -105,7 +105,7 @@ def generate_simulations(
         spyros_json = fetch_spyros_volatility(asset)        
         spyros_sigma = float(spyros_json["smoothed_1d_vol_per_day"]) / sqrt24
         sigma = spyros_sigma
-    elif use_spyrs(hot_key, "XXX"):
+    elif use_spyros(hot_key, "XXX"):
         sigma = float(sigma) * 0.95 / 1.075
     
     sigma = float(sigma) * 0.95 * 1
