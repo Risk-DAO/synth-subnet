@@ -102,7 +102,8 @@ def generate_simulations(
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
 
     if use_spyros(hot_key, asset):
-        spyros_json = fetch_spyros_volatility(asset)        
+        spyros_json = fetch_spyros_volatility(asset)
+        print(f"spyros asset {asset}, jsons {xxx_json}, hot key {hot_key}, spyros json {spyros_json}")
         spyros_sigma = float(spyros_json["smoothed_1d_vol_per_day"]) / sqrt24
         sigma = spyros_sigma
     elif use_spyros(hot_key, "XXX"):
@@ -132,7 +133,7 @@ def generate_simulations(
     
     if not is_timestamp_recent(xxx_json["timestamp"]):
         sigma = default_sigma * 1
-    print(f"asset {asset}, sigma {sigma}, jsons {xxx_json}, hot key {hot_key}, spyros json {spyros_json}")
+    print(f"asset {asset}, sigma {sigma}, jsons {xxx_json}, hot key {hot_key}")
             
     simulations = simulate_crypto_price_paths(
         current_price=current_price,
