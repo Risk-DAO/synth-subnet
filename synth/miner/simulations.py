@@ -107,25 +107,25 @@ def generate_simulations(
         spyros_sigma = float(spyros_json["smoothed_1d_vol_per_day"]) / sqrt24
         sigma = spyros_sigma
     elif use_spyros(hot_key, "XXX"):
-        sigma = float(sigma) * 0.95 / 1.075
+        sigma = 0.9 * float(sigma) * 0.95 / 1.075
     
     sigma = float(sigma) * 0.95 * 1
     
     if hot_key == "5EAYBxtPhkVgkoyW6rAYTLhiM3Rbv8s32oaxeEK6QbD5Z4Ld":
         print("lower sigma again")
-        sigma = float(sigma) * 0.95 # 0.9
+        sigma = 0.9 * float(sigma) * 0.95 # 0.9
     if hot_key == "5EbbNM6JBtKVF7gwdW3fcp78J2EQYx1Y3Gg8wwZhhcPHNme7":
         print("0.925 again")
-        sigma = float(sigma) * 0.95 * 1.025 # 0.925        
+        sigma = 0.9 * float(sigma) * 0.95 * 1.025 # 0.925        
     if hot_key == "5HoviLrfGLJC1N2dKhuqxb33PP57v5tSg9zNd59xFZoCdymY":
         print("0.975 again")
-        sigma = float(sigma) * 1.025 # 0.975
+        sigma = 0.9 * float(sigma) * 1.025 # 0.975
     if hot_key == "5H9RWmJ48VHXxYJidKa8qGvYCHuyxGyUqisGSbbHakB14oqq":
         print("0.875 again")
-        sigma = float(sigma) * 0.95 / 1.025 # 0.875
+        sigma = 0.9 * float(sigma) * 0.95 / 1.025 # 0.875
     if hot_key == "5HBPzDhwAJqXbBtqaaShKojisx7rybxAdfmLRvNwnmo4za9f":
         print("0.85 again")
-        sigma = float(sigma) * 0.95 / 1.05 # 0.85
+        sigma = 0.9 * float(sigma) * 0.95 / 1.05 # 0.85
     if hot_key == "5DLF2dzifMBZTBRBSytTaGWPWeNzd1MZpAkAqD65n9KjJXnF":
         print("0.825 again")
         sigma = float(sigma) * 0.95 / 1.075 # 0.875
