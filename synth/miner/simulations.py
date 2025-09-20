@@ -6,6 +6,10 @@ from synth.utils.helpers import (
     convert_prices_to_time_format,
 )
 
+from synth.miner.mapping import (
+    get_factor
+)
+
 import requests
 from datetime import datetime, timedelta, timezone
 import math
@@ -106,30 +110,8 @@ def generate_simulations(
         print(f"spyros asset {asset}, jsons {xxx_json}, hot key {hot_key}, spyros json {spyros_json}")
         spyros_sigma = float(spyros_json["smoothed_1d_vol_per_day"]) / sqrt24
         sigma = spyros_sigma
-    elif use_spyros(hot_key, "XXX"):
-        sigma = 0.9 * float(sigma) * 0.95 / 1.075
     
-    sigma = float(sigma) * 0.95 * 1
-    
-    if hot_key == "5EAYBxtPhkVgkoyW6rAYTLhiM3Rbv8s32oaxeEK6QbD5Z4Ld":
-        print("lower sigma again")
-        sigma = 0.9 * float(sigma) * 0.95 # 0.9
-    if hot_key == "5EbbNM6JBtKVF7gwdW3fcp78J2EQYx1Y3Gg8wwZhhcPHNme7":
-        print("0.925 again")
-        sigma = 0.9 * float(sigma) * 0.95 * 1.025 # 0.925        
-    if hot_key == "5HoviLrfGLJC1N2dKhuqxb33PP57v5tSg9zNd59xFZoCdymY":
-        print("0.975 again")
-        sigma = 0.9 * float(sigma) * 1.025 # 0.975
-    if hot_key == "5H9RWmJ48VHXxYJidKa8qGvYCHuyxGyUqisGSbbHakB14oqq":
-        print("0.875 again")
-        sigma = 0.9 * float(sigma) * 0.95 / 1.025 # 0.875
-    if hot_key == "5HBPzDhwAJqXbBtqaaShKojisx7rybxAdfmLRvNwnmo4za9f":
-        print("0.85 again")
-        sigma = 0.9 * float(sigma) * 0.95 / 1.05 # 0.85
-    if hot_key == "5DLF2dzifMBZTBRBSytTaGWPWeNzd1MZpAkAqD65n9KjJXnF":
-        print("0.825 again")
-        sigma = float(sigma) * 0.95 / 1.075 # 0.875
-
+    sigma = float(sigma) * get_factor(hot_key, asset)
     
     if not is_timestamp_recent(xxx_json["timestamp"]):
         sigma = default_sigma * 1
