@@ -105,6 +105,9 @@ def generate_simulations(
     sqrt24 = math.sqrt(24)
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
 
+    if hot_key == "5D2D5rRPZSzqvS1d7KDqSzbqbL6Eo6PteShd7i2oNcXboYpi":
+        sigma = float(xxx_json["historical_vol"]) / sqrt24        
+
     if use_spyros(hot_key, asset):
         spyros_json = fetch_spyros_volatility(asset)
         print(f"spyros asset {asset}, jsons {xxx_json}, hot key {hot_key}, spyros json {spyros_json}")
