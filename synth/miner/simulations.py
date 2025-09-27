@@ -105,7 +105,8 @@ def generate_simulations(
     sqrt24 = math.sqrt(24)
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
 
-    if hot_key == "5D2D5rRPZSzqvS1d7KDqSzbqbL6Eo6PteShd7i2oNcXboYpi":
+    historical_miners = ["5D2D5rRPZSzqvS1d7KDqSzbqbL6Eo6PteShd7i2oNcXboYpi", "5HoviLrfGLJC1N2dKhuqxb33PP57v5tSg9zNd59xFZoCdymY", "5Fvfszm7RqYpqUqS9UFimsxcS5EpoD7z1D8PnwmJcYDSrzKf"]
+    if hot_key in historical_miners:
         sigma = float(xxx_json["historical_vol"]) / sqrt24        
 
     if use_spyros(hot_key, asset):
