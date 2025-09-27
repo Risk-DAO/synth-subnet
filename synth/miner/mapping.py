@@ -11,7 +11,7 @@ def get_factor(hot_key, asset):
     "5FLC6usUvg7aMrr2Jh1eaYExFdT15H7FqwLW9E6mo4cS3GUg" : 0.68,
     "5Hj5DvTSXoUWMga4HzJrw3EZYrbF2S6zeRVVEWeKouL73LkB" : 0.66,
     "5HT6iGZ8KBJLifhEpWwfV8ZfoFjz1tPoaBEydvoJvMsnYZsy" : 0.64,
-    "5Fvfszm7RqYpqUqS9UFimsxcS5EpoD7z1D8PnwmJcYDSrzKf" : 0.7,
+    "5Fvfszm7RqYpqUqS9UFimsxcS5EpoD7z1D8PnwmJcYDSrzKf" : 0.9,
     "5CDZtpfGqmWPnMsZHSoXTr8hbHjkA7KfBc7pYSm5rdkhyQJh" : 0.7,
     "5CSKHRJwDiBEeyhc2ziUkQbTGkcMK2xSmbHFGTtnZDrYttUi" : 0.7,
     "5EJ4LUq7RJoEzq5wREh3hYWze1SCr4YKdrvEnpLc1PTbdaA4" : 0.7,
