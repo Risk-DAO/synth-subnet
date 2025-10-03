@@ -34,7 +34,7 @@ def fetch_spyros_volatility(asset_name):
     url = "https://spryus-c19399f53837.herokuapp.com/volatility"
     params = {"asset": asset_name}
     if asset_name == "XAU":
-        params[asset] = "PAXG"
+        params["asset"] = "PAXG"
     
     try:
         response = requests.get(url, params=params, timeout=10)
