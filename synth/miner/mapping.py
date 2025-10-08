@@ -1,34 +1,40 @@
+mapping = {
+  "5EAYBxtPhkVgkoyW6rAYTLhiM3Rbv8s32oaxeEK6QbD5Z4Ld" : {"sigma" : 0.98, "algo" : "simulate_single_price_path"},
+  "5EbbNM6JBtKVF7gwdW3fcp78J2EQYx1Y3Gg8wwZhhcPHNme7" : {"sigma" : 0.96, "algo" : "simulate_single_price_path"},
+  "5H9RWmJ48VHXxYJidKa8qGvYCHuyxGyUqisGSbbHakB14oqq" : {"sigma" : 0.94, "algo" : "simulate_single_price_path"},
+  "5HBPzDhwAJqXbBtqaaShKojisx7rybxAdfmLRvNwnmo4za9f" : {"sigma" : 0.92, "algo" : "simulate_single_price_path"},
+  "5DLF2dzifMBZTBRBSytTaGWPWeNzd1MZpAkAqD65n9KjJXnF" : {"sigma" : 0.90, "algo" : "simulate_single_price_path"},
+  "5CDZqing5GnN9ftZ2g7oBVYR5mSsoFZwfPBWVgQxEd1rEzMi" : {"sigma" : 0.88, "algo" : "simulate_single_price_path"},
+  "5FLC6usUvg7aMrr2Jh1eaYExFdT15H7FqwLW9E6mo4cS3GUg" : {"sigma" : 0.86, "algo" : "simulate_single_price_path"},
+  "5CDZtpfGqmWPnMsZHSoXTr8hbHjkA7KfBc7pYSm5rdkhyQJh" : {"sigma" : 0.84, "algo" : "simulate_single_price_path"},
+  "5CSKHRJwDiBEeyhc2ziUkQbTGkcMK2xSmbHFGTtnZDrYttUi" : {"sigma" : 0.82, "algo" : "simulate_single_price_path"},
+  "5EJ4LUq7RJoEzq5wREh3hYWze1SCr4YKdrvEnpLc1PTbdaA4" : {"sigma" : 0.80, "algo" : "simulate_single_price_path"},
+  "5GsZ4uJL6UC2tucgKtojzXCVMSVrQ3oDxvRUT3nKJL54TXZi" : {"sigma" : 0.78, "algo" : "simulate_single_price_path"},
+  "5GpCoNpSYxQ2Fpgxm7Eyoghkb8bTmbd7Dh1XsERLVX6p5w7f" : {"sigma" : 0.76, "algo" : "simulate_single_price_path"},
+  "5FYhH1JMNe22G7PqmJfXXRGLmbZGY65SL2z6d73WWp5ftda5" : {"sigma" : 0.7, "algo" : "simulate_single_price_path"},
+
+  # historic
+  "5D2D5rRPZSzqvS1d7KDqSzbqbL6Eo6PteShd7i2oNcXboYpi" : {"sigma" : 0.76, "algo" : "simulate_single_price_path"},
+  "5HoviLrfGLJC1N2dKhuqxb33PP57v5tSg9zNd59xFZoCdymY" : {"sigma" : 0.86, "algo" : "simulate_single_price_path"},
+  "5Fvfszm7RqYpqUqS9UFimsxcS5EpoD7z1D8PnwmJcYDSrzKf" : {"sigma" : 0.96, "algo" : "simulate_single_price_path"},
+  "5DbxBFeEfxnsNYnx95YqDG74fpxMLQQwBnGrskDCNzjJFvxW" : {"sigma" : 1.06, "algo" : "simulate_single_price_path"},
+  "5GHeboa3d4QTdnboR1oQLeQiZudX9cKYyBpY6VHjxsSvCC29" : {"sigma" : 1.16, "algo" : "simulate_single_price_path"},
+
+  # spyros
+  "5Hj5DvTSXoUWMga4HzJrw3EZYrbF2S6zeRVVEWeKouL73LkB" : {"sigma" : 0.7, "algo" : "simulate_single_price_path"},
+  "5HT6iGZ8KBJLifhEpWwfV8ZfoFjz1tPoaBEydvoJvMsnYZsy" : {"sigma" : 0.9, "algo" : "simulate_single_price_path"}
+}
+
+
 def get_factor(hot_key, asset):
-  mapping = {
-    "5EAYBxtPhkVgkoyW6rAYTLhiM3Rbv8s32oaxeEK6QbD5Z4Ld" : 0.98,
-    "5EbbNM6JBtKVF7gwdW3fcp78J2EQYx1Y3Gg8wwZhhcPHNme7" : 0.96,
-    "5H9RWmJ48VHXxYJidKa8qGvYCHuyxGyUqisGSbbHakB14oqq" : 0.94,
-    "5HBPzDhwAJqXbBtqaaShKojisx7rybxAdfmLRvNwnmo4za9f" : 0.92,
-    "5DLF2dzifMBZTBRBSytTaGWPWeNzd1MZpAkAqD65n9KjJXnF" : 0.90,
-    "5CDZqing5GnN9ftZ2g7oBVYR5mSsoFZwfPBWVgQxEd1rEzMi" : 0.88,
-    "5FLC6usUvg7aMrr2Jh1eaYExFdT15H7FqwLW9E6mo4cS3GUg" : 0.86,
-    "5CDZtpfGqmWPnMsZHSoXTr8hbHjkA7KfBc7pYSm5rdkhyQJh" : 0.84,
-    "5CSKHRJwDiBEeyhc2ziUkQbTGkcMK2xSmbHFGTtnZDrYttUi" : 0.82,
-    "5EJ4LUq7RJoEzq5wREh3hYWze1SCr4YKdrvEnpLc1PTbdaA4" : 0.80,
-    "5GsZ4uJL6UC2tucgKtojzXCVMSVrQ3oDxvRUT3nKJL54TXZi" : 0.78,
-    "5GpCoNpSYxQ2Fpgxm7Eyoghkb8bTmbd7Dh1XsERLVX6p5w7f" : 0.76,
-    "5FYhH1JMNe22G7PqmJfXXRGLmbZGY65SL2z6d73WWp5ftda5" : 0.7,
-
-    # historic
-    "5D2D5rRPZSzqvS1d7KDqSzbqbL6Eo6PteShd7i2oNcXboYpi" : 0.76,
-    "5HoviLrfGLJC1N2dKhuqxb33PP57v5tSg9zNd59xFZoCdymY" : 0.86,
-    "5Fvfszm7RqYpqUqS9UFimsxcS5EpoD7z1D8PnwmJcYDSrzKf" : 0.96,
-    "5DbxBFeEfxnsNYnx95YqDG74fpxMLQQwBnGrskDCNzjJFvxW" : 1.06,
-    "5GHeboa3d4QTdnboR1oQLeQiZudX9cKYyBpY6VHjxsSvCC29" : 1.16,    
-
-    # spyros
-    "5Hj5DvTSXoUWMga4HzJrw3EZYrbF2S6zeRVVEWeKouL73LkB" : 0.7,
-    "5HT6iGZ8KBJLifhEpWwfV8ZfoFjz1tPoaBEydvoJvMsnYZsy" : 0.9
-  }
-
   if hot_key in mapping:
-    return mapping[hot_key]
+    return mapping[hot_key]["sigma"]
   else:
     return 0.666
 
+def get_alog(hot_key, asset):
+  if hot_key in mapping:
+    return mapping[hot_key]["algo"]
+  else:
+    return "simulate_single_price_path"
 
