@@ -51,8 +51,8 @@ def fetch_spyros_volatility(asset_name):
         
 def use_spyros(hot_key, asset):
     spyros_keys = ["5Hj5DvTSXoUWMga4HzJrw3EZYrbF2S6zeRVVEWeKouL73LkB", "5HT6iGZ8KBJLifhEpWwfV8ZfoFjz1tPoaBEydvoJvMsnYZsy"]
-    if asset != "SOL":
-        return False
+    #if asset != "SOL":
+    #    return False
 
     return hot_key in spyros_keys
 
@@ -105,7 +105,7 @@ def generate_simulations(
     default_sigma = sigma = 0.003
     sqrt24 = math.sqrt(24)
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
-    historical_miners = ["5DbxBFeEfxnsNYnx95YqDG74fpxMLQQwBnGrskDCNzjJFvxW", "5GHeboa3d4QTdnboR1oQLeQiZudX9cKYyBpY6VHjxsSvCC29", "5D2D5rRPZSzqvS1d7KDqSzbqbL6Eo6PteShd7i2oNcXboYpi", "5HoviLrfGLJC1N2dKhuqxb33PP57v5tSg9zNd59xFZoCdymY", "5Fvfszm7RqYpqUqS9UFimsxcS5EpoD7z1D8PnwmJcYDSrzKf"]
+    historical_miners = ["5DbxBFeEfxnsNYnx95YqDG74fpxMLQQwBnGrskDCNzjJFvxW", "5GHeboa3d4QTdnboR1oQLeQiZudX9cKYyBpY6VHjxsSvCC29"]
     if hot_key in historical_miners:
         sigma = float(xxx_json["historical_vol"]) / sqrt24        
 
