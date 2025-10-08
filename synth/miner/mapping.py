@@ -32,7 +32,7 @@ def get_factor(hot_key, asset):
   else:
     return 0.666
 
-def get_alog(hot_key, asset):
+def get_algo(hot_key, asset):
   if hot_key in mapping:
     return mapping[hot_key]["algo"]
   else:
