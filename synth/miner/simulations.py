@@ -7,7 +7,8 @@ from synth.utils.helpers import (
 )
 
 from synth.miner.mapping import (
-    get_factor
+    get_factor,
+    get_algo
 )
 
 import requests
@@ -126,6 +127,7 @@ def generate_simulations(
         time_length=time_length,
         num_simulations=num_simulations,
         sigma=sigma,
+        func_name=get_algo(hot_key, asset)
     )
 
     predictions = convert_prices_to_time_format(
