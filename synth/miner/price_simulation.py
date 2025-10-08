@@ -45,7 +45,7 @@ def get_asset_price(asset="BTC"):
     return live_price
 
 
-def simulate_single_price_path(current_price, time_increment, time_length, sigma, mu=0):
+def simulate_single_price_path_gbm(current_price, time_increment, time_length, sigma, mu=0):
     one_hour = 3600
     dt = time_increment / one_hour
     num_steps = int(time_length / time_increment)
@@ -58,10 +58,57 @@ def simulate_single_price_path(current_price, time_increment, time_length, sigma
     price_path = current_price * cumulative_returns
     return price_path
 
+def simulate_price_path_logOU(
+    current_price,
+    time_increment,
+    time_length,
+    sigma,
+    theta=0.1,
+    mu=0,  # long-term mean of log-price drift
+):
+    """
+    Simulate a log-Ornstein–Uhlenbeck (mean-reverting in log space) price path.
 
+    Parameters:
+        current_price : float
+            Starting price (e.g., 100_000)
+        time_increment : float
+            Step size in seconds (e.g., 300 for 5 minutes)
+        time_length : float
+            Total simulation horizon in seconds (e.g., 24*3600)
+        sigma : float
+            Annualized volatility (e.g., 0.3)
+        theta : float
+            Mean reversion speed (higher = faster reversion)
+        mu : float
+            Long-term mean of the *log-price* (0 keeps it centered)
+
+    Returns:
+        np.ndarray : Simulated price path (length N+1)
+    """
+
+    one_hour = 3600
+    dt = time_increment / one_hour  # time step in hours
+    num_steps = int(time_length / time_increment)
+
+    # Convert sigma from annualized to hourly
+    hours_in_year = 365 * 24
+    sigma_hourly = sigma / np.sqrt(hours_in_year)
+
+    # Initialize arrays
+    log_price = np.zeros(num_steps + 1)
+    log_price[0] = np.log(current_price)
+
+    for t in range(1, num_steps + 1):
+        # Mean reversion term: pull back toward mu
+        drift = theta * (mu - log_price[t - 1]) * dt
+        diffusion = sigma_hourly * np.sqrt(dt) * np.random.normal()
+        log_price[t] = log_price[t - 1] + drift + diffusion
+
+    return np.exp(log_price)
 
 def simulate_crypto_price_paths(
-    current_price, time_increment, time_length, num_simulations, sigma
+    current_price, time_increment, time_length, num_simulations, sigma, func_name
 ):
     """
     Simulate multiple crypto asset price paths.
@@ -69,7 +116,7 @@ def simulate_crypto_price_paths(
 
     price_paths = []
     for _ in range(num_simulations):
-        price_path = simulate_single_price_path(
+        price_path = globals()[func_name](
             current_price, time_increment, time_length, sigma
         )
         price_paths.append(price_path)
