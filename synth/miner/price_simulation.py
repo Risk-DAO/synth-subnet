@@ -45,22 +45,19 @@ def get_asset_price(asset="BTC"):
     return live_price
 
 
-def simulate_single_price_path(
-    current_price, time_increment, time_length, sigma
-):
-    """
-    Simulate a single crypto asset price path.
-    """
+def simulate_single_price_path(current_price, time_increment, time_length, sigma, mu=0):
     one_hour = 3600
     dt = time_increment / one_hour
     num_steps = int(time_length / time_increment)
-    std_dev = sigma * np.sqrt(dt)
-    price_change_pcts = np.random.normal(0, std_dev, size=num_steps)
-    #cumulative_returns = np.cumprod(1 + price_change_pcts)
-    cumulative_returns = np.cumprod(np.exp(price_change_pcts))
+
+    # lognormal increments with drift correction
+    increments = (mu - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * np.random.normal(size=num_steps)
+    cumulative_returns = np.exp(np.cumsum(increments))
     cumulative_returns = np.insert(cumulative_returns, 0, 1.0)
+
     price_path = current_price * cumulative_returns
     return price_path
+
 
 
 def simulate_crypto_price_paths(
