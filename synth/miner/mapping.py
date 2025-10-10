@@ -14,9 +14,9 @@ mapping = {
   "5FYhH1JMNe22G7PqmJfXXRGLmbZGY65SL2z6d73WWp5ftda5" : {"sigma" : 0.7, "algo" : "simulate_single_price_path_gbm"},
 
   # orstien
-  "5D2D5rRPZSzqvS1d7KDqSzbqbL6Eo6PteShd7i2oNcXboYpi" : {"sigma" : 0.76, "algo" : "simulate_price_path_logOU"},
-  "5HoviLrfGLJC1N2dKhuqxb33PP57v5tSg9zNd59xFZoCdymY" : {"sigma" : 0.86, "algo" : "simulate_price_path_logOU"},
-  "5Fvfszm7RqYpqUqS9UFimsxcS5EpoD7z1D8PnwmJcYDSrzKf" : {"sigma" : 0.96, "algo" : "simulate_price_path_logOU"},
+  "5D2D5rRPZSzqvS1d7KDqSzbqbL6Eo6PteShd7i2oNcXboYpi" : {"sigma" : 0.76, "algo" : "simulate_single_price_path_gbm"},
+  "5HoviLrfGLJC1N2dKhuqxb33PP57v5tSg9zNd59xFZoCdymY" : {"sigma" : 0.86, "algo" : "simulate_single_price_path_gbm"},
+  "5Fvfszm7RqYpqUqS9UFimsxcS5EpoD7z1D8PnwmJcYDSrzKf" : {"sigma" : 0.96, "algo" : "simulate_single_price_path_gbm"},
 
 
   # historic
