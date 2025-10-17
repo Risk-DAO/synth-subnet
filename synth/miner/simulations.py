@@ -8,7 +8,8 @@ from synth.utils.helpers import (
 
 from synth.miner.mapping import (
     get_factor,
-    get_algo
+    get_algo,
+    get_strategy
 )
 
 import requests
@@ -105,11 +106,10 @@ def generate_simulations(
     default_sigma = sigma = 0.003
     sqrt24 = math.sqrt(24)
     sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
-    historical_miners = ["5DbxBFeEfxnsNYnx95YqDG74fpxMLQQwBnGrskDCNzjJFvxW", "5GHeboa3d4QTdnboR1oQLeQiZudX9cKYyBpY6VHjxsSvCC29"]
-    if hot_key in historical_miners:
+    if get_strategy(hot_key, asset) == "historic":
         sigma = float(xxx_json["historical_vol"]) / sqrt24        
 
-    if use_spyros(hot_key, asset):
+    if get_strategy(hot_key, asset) == "spyros":
         spyros_json = fetch_spyros_volatility(asset)
         print(f"spyros asset {asset}, jsons {xxx_json}, hot key {hot_key}, spyros json {spyros_json}")
         spyros_sigma = float(spyros_json["smoothed_1d_vol_per_day"]) / sqrt24
