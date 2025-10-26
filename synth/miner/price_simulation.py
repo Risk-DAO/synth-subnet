@@ -62,8 +62,9 @@ def simulate_single_price_path(
     price_path = current_price * cumulative_returns
     return price_path
 
-def simulate_single_price_path_gbm(current_price, time_increment, time_length, sigma, mu=0, asset = "BTC"):
+def simulate_single_price_path_gbm(current_price, time_increment, time_length, sigma, asset = "BTC"):
     one_hour = 3600
+    mu = 0
     dt = time_increment / one_hour
     num_steps = int(time_length / time_increment)
 
