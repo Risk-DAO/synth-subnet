@@ -1,5 +1,7 @@
 import requests
 
+from scipy import optimize
+from scipy.stats import t
 
 import numpy as np
 from tenacity import (
@@ -45,7 +47,7 @@ def get_asset_price(asset="BTC"):
     return live_price
 
 def simulate_single_price_path(
-    current_price, time_increment, time_length, sigma
+    current_price, time_increment, time_length, sigma, asset = "BTC"
 ):
     """
     Simulate a single crypto asset price path.
@@ -60,7 +62,7 @@ def simulate_single_price_path(
     price_path = current_price * cumulative_returns
     return price_path
 
-def simulate_single_price_path_gbm(current_price, time_increment, time_length, sigma, mu=0):
+def simulate_single_price_path_gbm(current_price, time_increment, time_length, sigma, mu=0, asset = "BTC"):
     one_hour = 3600
     dt = time_increment / one_hour
     num_steps = int(time_length / time_increment)
@@ -80,6 +82,7 @@ def simulate_price_path_logOU(
     sigma,
     theta=0.1,
     mu=0,  # long-term mean of log-price drift
+    asset = "BTC"
 ):
     """
     Simulate a log-Ornstein–Uhlenbeck (mean-reverting in log space) price path.
@@ -122,8 +125,58 @@ def simulate_price_path_logOU(
 
     return np.exp(log_price)
 
+def scale_from_iv(sigma_atm, T, nu):
+    """Return Student-t scale s that matches ATM IV variance over horizon T."""
+    v = (sigma_atm ** 2) * T
+    if nu <= 2:
+        raise ValueError("nu must be > 2 for finite variance")
+    return np.sqrt(v * (nu - 2) / nu)
+
+def nu_from_excess_kurtosis(kappa):
+    """Map excess kurtosis -> nu (Student-t). Requires kappa > 0 -> nu > 4."""
+    if kappa <= 0:
+        raise ValueError("Excess kurtosis must be > 0 for Student-t (nu>4).")
+    return 4.0 + 6.0 / kappa
+
+def nu_from_tail(m_abs, p, sigma_atm, T, nu_lo=2.01, nu_hi=200.0):
+    """
+    Solve for nu so that P(|R|>m_abs)=p, given ATM IV for variance matching.
+    R ~ s * t_nu, with s chosen to match variance = sigma_atm^2 * T.
+    """
+    if not (0 < p < 1) or m_abs <= 0:
+        raise ValueError("Provide 0<p<1 and m_abs>0.")
+    def objective(nu):
+        s = scale_from_iv(sigma_atm, T, nu)
+        # Two-sided tail: P(|R|>m) = 2*(1 - CDF(m/s))
+        tail = 2.0 * (1.0 - t.cdf(m_abs / s, df=nu))
+        return tail - p
+    return optimize.brentq(objective, nu_lo, nu_hi)
+
+def sample_student_t_multistep(S0, sigma_atm, T, nu, n_paths=100, n_steps=289):
+    dt = T / n_steps
+    s_step = np.sqrt((sigma_atm**2) * dt * (nu - 2) / nu)
+    # draw t-distributed returns for each (path, step)
+    R = s_step * t.rvs(df=nu, size=(n_paths, n_steps))
+    # cumulative log-sum to get log-prices
+    log_ST = np.log(S0) + np.cumsum(R, axis=1)
+    ST = np.exp(log_ST)
+    return ST, R
+
+def simulate_price_path_student_t(S0, time_increment, time_length, sigma_hourly, asset = "BTC"):
+    kappas = {"BTC" : 5.0 ,"ETH" : 8.0, "SOL" : 12.0, "XAU" : 0}
+    kappa = kappas[asset]                  # choose your target excess kurtosis
+    nu = nu_from_excess_kurtosis(kappa)
+    s  = scale_from_iv(0.70, 1/365, nu)
+    
+    hours_in_year = 365.0 * 24.0
+    sigma_atm = sigma_hourly * np.sqrt(hours_in_year)
+
+    ST, R = sample_student_t_multistep(S0, sigma_atm, T=1/365, nu=nu, n_paths=1)
+
+    return ST[0]
+
 def simulate_crypto_price_paths(
-    current_price, time_increment, time_length, num_simulations, sigma, func_name = "simulate_single_price_path"
+    current_price, time_increment, time_length, num_simulations, sigma, func_name = "simulate_single_price_path", asset = "BTC"
 ):
     """
     Simulate multiple crypto asset price paths.
@@ -132,7 +185,7 @@ def simulate_crypto_price_paths(
     price_paths = []
     for _ in range(num_simulations):
         price_path = globals()[func_name](
-            current_price, time_increment, time_length, sigma
+            current_price, time_increment, time_length, sigma, asset
         )
         price_paths.append(price_path)
 

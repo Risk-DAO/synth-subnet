@@ -8,13 +8,13 @@ mapping = {
   "5FLC6usUvg7aMrr2Jh1eaYExFdT15H7FqwLW9E6mo4cS3GUg" : {"sigma" : 0.8, "algo" : "simulate_single_price_path_gbm", "strategy" : "regular"},
 
 
-  # historic
-  "5DbxBFeEfxnsNYnx95YqDG74fpxMLQQwBnGrskDCNzjJFvxW" : {"sigma" : 1.06, "algo" : "simulate_single_price_path", "strategy" : "historic"}, # making money
-  "5CDZtpfGqmWPnMsZHSoXTr8hbHjkA7KfBc7pYSm5rdkhyQJh" : {"sigma" : 1.2, "algo" : "simulate_single_price_path", "strategy" : "historic"},
-  "5CSKHRJwDiBEeyhc2ziUkQbTGkcMK2xSmbHFGTtnZDrYttUi" : {"sigma" : 0.9, "algo" : "simulate_single_price_path_gbm", "strategy" : "historic"},
-  "5EJ4LUq7RJoEzq5wREh3hYWze1SCr4YKdrvEnpLc1PTbdaA4" : {"sigma" : 0.8, "algo" : "simulate_single_price_path", "strategy" : "historic"},
-  "5GsZ4uJL6UC2tucgKtojzXCVMSVrQ3oDxvRUT3nKJL54TXZi" : {"sigma" : 0.7, "algo" : "simulate_single_price_path_gbm", "strategy" : "historic"},
-  "5GpCoNpSYxQ2Fpgxm7Eyoghkb8bTmbd7Dh1XsERLVX6p5w7f" : {"sigma" : 0.6, "algo" : "simulate_single_price_path", "strategy" : "historic"},
+  # student
+  "5DbxBFeEfxnsNYnx95YqDG74fpxMLQQwBnGrskDCNzjJFvxW" : {"sigma" : 1.06, "algo" : "simulate_price_path_student_t", "strategy" : "spyros"}, # making money
+  "5CDZtpfGqmWPnMsZHSoXTr8hbHjkA7KfBc7pYSm5rdkhyQJh" : {"sigma" : 1.2, "algo" : "simulate_price_path_student_t", "strategy" : "regular"},
+  "5CSKHRJwDiBEeyhc2ziUkQbTGkcMK2xSmbHFGTtnZDrYttUi" : {"sigma" : 0.9, "algo" : "simulate_price_path_student_t", "strategy" : "spyros"},
+  "5EJ4LUq7RJoEzq5wREh3hYWze1SCr4YKdrvEnpLc1PTbdaA4" : {"sigma" : 0.8, "algo" : "simulate_price_path_student_t", "strategy" : "regular"},
+  "5GsZ4uJL6UC2tucgKtojzXCVMSVrQ3oDxvRUT3nKJL54TXZi" : {"sigma" : 0.7, "algo" : "simulate_price_path_student_t", "strategy" : "spyros"},
+  "5GpCoNpSYxQ2Fpgxm7Eyoghkb8bTmbd7Dh1XsERLVX6p5w7f" : {"sigma" : 0.6, "algo" : "simulate_price_path_student_t", "strategy" : "regular"},
 
 
 
