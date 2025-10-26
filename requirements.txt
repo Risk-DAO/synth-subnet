@@ -2,6 +2,7 @@ starlette>=0.37.2
 pydantic>=2
 rich>=13
 numpy>=1
+scipy>=1
 setuptools>=68
 requests>=2
 properscoring>=0.1
