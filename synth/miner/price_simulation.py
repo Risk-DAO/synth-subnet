@@ -164,7 +164,7 @@ def sample_student_t_multistep(S0, sigma_atm, T, nu, n_paths=100, n_steps=289):
     return ST, R
 
 def simulate_price_path_student_t(S0, time_increment, time_length, sigma_hourly, asset = "BTC"):
-    kappas = {"BTC" : 5.0 ,"ETH" : 8.0, "SOL" : 12.0, "XAU" : 0}
+    kappas = {"BTC" : 5.0 ,"ETH" : 8.0, "SOL" : 12.0, "XAU" : 0.0001}
     kappa = kappas[asset]                  # choose your target excess kurtosis
     nu = nu_from_excess_kurtosis(kappa)
     s  = scale_from_iv(0.70, 1/365, nu)
