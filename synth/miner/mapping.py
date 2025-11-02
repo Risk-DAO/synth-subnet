@@ -26,8 +26,8 @@ mapping = {
   "5Fvfszm7RqYpqUqS9UFimsxcS5EpoD7z1D8PnwmJcYDSrzKf" : {"sigma" : 0.8, "algo" : "simulate_single_price_path_gbm", "strategy" : "spyros"},
 
 
-  "5GHeboa3d4QTdnboR1oQLeQiZudX9cKYyBpY6VHjxsSvCC29" : {"sigma" : 1.16, "algo" : "simulate_single_price_path", "strategy" : "historic"}, # dead
-  "5Hj5DvTSXoUWMga4HzJrw3EZYrbF2S6zeRVVEWeKouL73LkB" : {"sigma" : 0.7, "algo" : "simulate_single_price_path", "strategy" : "spyros"} # dead
+  "5GHeboa3d4QTdnboR1oQLeQiZudX9cKYyBpY6VHjxsSvCC29" : {"sigma" : 0.7, "algo" : "simulate_single_price_path_gbm", "strategy" : "spyros"}, # new
+  "5Hj5DvTSXoUWMga4HzJrw3EZYrbF2S6zeRVVEWeKouL73LkB" : {"sigma" : 0.6, "algo" : "simulate_single_price_path_gbm", "strategy" : "spyros"} # new
 
 }
 
