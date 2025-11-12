@@ -6,6 +6,72 @@ from synth.utils.helpers import (
     convert_prices_to_time_format,
 )
 
+from synth.miner.mapping import (
+    get_factor,
+    get_algo,
+    get_strategy
+)
+
+import requests
+from datetime import datetime, timedelta, timezone
+import math
+
+def fetch_volatility(asset_name):
+    url = "https://deribit-2eb46cdf4c7a.herokuapp.com/volatility"
+    params = {"asset": asset_name}
+    
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()  # raises HTTPError for status codes >= 400
+        data = response.json()
+        return data
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data: {e}")
+        return None
+    except ValueError as e:
+        print(f"Error parsing JSON: {e}")
+        return None
+        
+def fetch_spyros_volatility(asset_name):
+    url = "https://spryus-c19399f53837.herokuapp.com/volatility"
+    params = {"asset": asset_name}
+    if asset_name == "XAU":
+        params["asset"] = "PAXG"
+    
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()  # raises HTTPError for status codes >= 400
+        data = response.json()
+        return data
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data: {e}")
+        return None
+    except ValueError as e:
+        print(f"Error parsing JSON: {e}")
+        return None
+        
+def use_spyros(hot_key, asset):
+    spyros_keys = ["5Hj5DvTSXoUWMga4HzJrw3EZYrbF2S6zeRVVEWeKouL73LkB", "5HT6iGZ8KBJLifhEpWwfV8ZfoFjz1tPoaBEydvoJvMsnYZsy"]
+    #if asset != "SOL":
+    #    return False
+
+    return hot_key in spyros_keys
+
+    
+
+def is_timestamp_recent(timestamp_str, max_age_hours=2):
+    """
+    Check if the timestamp (ISO format) is within max_age_hours from now (UTC).
+    """
+    try:
+        ts = datetime.fromisoformat(timestamp_str)
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
+        return now - ts <= timedelta(hours=max_age_hours)
+    except Exception as e:
+        print(f"Error parsing timestamp: {e}")
+        return False
 
 def generate_simulations(
     asset="BTC",
@@ -14,6 +80,7 @@ def generate_simulations(
     time_length=86400,
     num_simulations=1,
     sigma=0.01,
+    hot_key="xxx"
 ):
     """
     Generate simulated price paths.
@@ -35,22 +102,33 @@ def generate_simulations(
     current_price = get_asset_price(asset)
     if current_price is None:
         raise ValueError(f"Failed to fetch current price for asset: {asset}")
+    xxx_json = fetch_volatility(asset)
+    default_sigma = sigma = 0.003
+    sqrt24 = math.sqrt(24)
+    sigma = float(xxx_json["simple_avg_vol"]) / sqrt24
+    if get_strategy(hot_key, asset) == "historic":
+        sigma = float(xxx_json["historical_vol"]) / sqrt24        
 
-    if asset == "BTC":
-        sigma *= 3
-    elif asset == "ETH":
-        sigma *= 1.25
-    elif asset == "XAU":
-        sigma *= 0.5
-    elif asset == "SOL":
-        sigma *= 0.75
-
+    if get_strategy(hot_key, asset) == "spyros":
+        spyros_json = fetch_spyros_volatility(asset)
+        print(f"spyros asset {asset}, jsons {xxx_json}, hot key {hot_key}, spyros json {spyros_json}")
+        spyros_sigma = float(spyros_json["smoothed_1d_vol_per_day"]) / sqrt24
+        sigma = spyros_sigma
+    
+    sigma = float(sigma) * get_factor(hot_key, asset)
+    
+    if not is_timestamp_recent(xxx_json["timestamp"]):
+        sigma = default_sigma * 1
+    print(f"asset {asset}, sigma {sigma}, jsons {xxx_json}, hot key {hot_key}")
+            
     simulations = simulate_crypto_price_paths(
         current_price=current_price,
         time_increment=time_increment,
         time_length=time_length,
         num_simulations=num_simulations,
         sigma=sigma,
+        func_name=get_algo(hot_key, asset),
+        asset=asset
     )
 
     predictions = convert_prices_to_time_format(
