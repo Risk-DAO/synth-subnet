@@ -19,7 +19,9 @@
 from datetime import datetime, timedelta
 import random
 import time
-
+import typing
+import sys
+import traceback
 
 import bittensor as bt
 import numpy as np
@@ -33,17 +35,53 @@ from synth.utils.helpers import (
     get_current_time,
     timeout_from_start_time,
     convert_list_elements_to_str,
+    more_paths_launch_time,
 )
 from synth.utils.uids import check_uid_availability
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.moving_average import (
-    compute_weighted_averages,
+    compute_smoothed_score,
     prepare_df_for_moving_average,
     print_rewards_df,
 )
 from synth.validator.price_data_provider import PriceDataProvider
-from synth.validator.response_validation import validate_responses
+from synth.validator.response_validation_v1 import (
+    validate_responses as validate_responses_v1,
+)
+from synth.validator.response_validation_v2 import (
+    validate_responses as validate_responses_v2,
+)
 from synth.validator.reward import get_rewards, print_scores_df
+
+
+# TEMP
+def validate_responses(
+    response,
+    simulation_input: SimulationInput,
+    request_time: datetime,
+    process_time_str: typing.Optional[str],
+) -> str:
+    if not isinstance(response, (list, tuple)):
+        return "Not a list nor tuple: " + str(type(response))
+
+    if len(response) == 0:
+        return "Empty list"
+
+    first_element = response[0]
+    if isinstance(first_element, list):
+        if request_time >= more_paths_launch_time:
+            return "detected new format"
+
+        return validate_responses_v1(
+            response, simulation_input, request_time, process_time_str
+        )
+    else:
+        return validate_responses_v2(
+            response, simulation_input, request_time, process_time_str
+        )
+
+
+# END TEMP
 
 
 def send_weights_to_bittensor_and_update_weights_history(
@@ -84,7 +122,7 @@ def calculate_moving_average_and_update_rewards(
     miner_data_handler: MinerDataHandler,
     scored_time: datetime,
     cutoff_days: int,
-    half_life_days: float,
+    window_days: float,
     softmax_beta: float,
 ) -> list[dict]:
     # apply custom moving average rewards
@@ -95,10 +133,10 @@ def calculate_moving_average_and_update_rewards(
 
     df = prepare_df_for_moving_average(miner_scores_df)
 
-    moving_averages_data = compute_weighted_averages(
+    moving_averages_data = compute_smoothed_score(
         miner_data_handler=miner_data_handler,
         input_df=df,
-        half_life_days=half_life_days,
+        window_days=window_days,
         scored_time=scored_time,
         softmax_beta=softmax_beta,
     )
@@ -135,7 +173,7 @@ def calculate_rewards_and_update_scores(
 
         bt.logging.debug(f"validator_request_id: {validator_request.id}")
 
-        prompt_scores, detailed_info = get_rewards(
+        prompt_scores, detailed_info, real_prices = get_rewards(
             miner_data_handler=miner_data_handler,
             price_data_provider=price_data_provider,
             validator_request=validator_request,
@@ -153,7 +191,7 @@ def calculate_rewards_and_update_scores(
         )
 
         miner_data_handler.set_miner_scores(
-            reward_details=detailed_info, scored_time=miner_score_time
+            real_prices, validator_request.id, detailed_info, miner_score_time
         )
 
     # Success if at least one request succeed
@@ -212,9 +250,13 @@ async def query_available_miners_and_save_responses(
     for i, synapse in enumerate(synapses):
         response = synapse.deserialize()
         process_time = synapse.dendrite.process_time
-        format_validation = validate_responses(
-            response, simulation_input, request_time, process_time
-        )
+        try:
+            format_validation = validate_responses(
+                response, simulation_input, request_time, process_time
+            )
+        except Exception:
+            format_validation = "error during validation"
+            traceback.print_exc(file=sys.stderr)
         miner_id = miner_uids[i]
         miner_predictions[miner_id] = (
             response,

@@ -17,9 +17,11 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-import typing
+from typing import Optional, Annotated, Any, Callable
+
 
 import bittensor as bt
+from pydantic import ValidationError, WrapValidator
 
 
 from synth.simulation_input import SimulationInput
@@ -27,6 +29,13 @@ from synth.simulation_input import SimulationInput
 # This is the protocol for the miner and validator interaction.
 # It is a simple request-response protocol where the validator sends a request
 # to the miner, and the miner responds with a simulation_output response.
+
+
+def invalid_to_none(v: Any, handler: Callable[[Any], Any]) -> Any:
+    try:
+        return handler(v)
+    except ValidationError:
+        return v
 
 
 class Simulation(bt.Synapse):
@@ -44,11 +53,12 @@ class Simulation(bt.Synapse):
     simulation_input: SimulationInput
 
     # Optional request output, filled by receiving axon.
-    simulation_output: typing.Optional[
-        typing.List[typing.List[typing.Dict[str, typing.Union[str, float]]]]
+    simulation_output: Annotated[
+        tuple[int | list[int | float], ...] | None,
+        WrapValidator(invalid_to_none),
     ] = None
 
-    def deserialize(self) -> typing.Optional[list]:
+    def deserialize(self) -> Optional[list]:
         """
         Deserialize simulation output. This method retrieves the response from
         the miner in the form of simulation_output, deserializes it and returns it

@@ -14,9 +14,8 @@ logging_level = debug
 validator_coldkey_name = validator-base
 validator_hotkey_name = default
 
-ewma_alpha = 2.0
-ewma_half_life_days = 1.0
-ewma_cutoff_days = 2
+ewma_window_days = 10
+ewma_cutoff_days = 10
 
 # Python virtual environment
 venv_python=bt_venv/bin/python3
@@ -34,5 +33,5 @@ validator:
 		--netuid $(netuid) \
 		--logging.$(logging_level) \
 		--neuron.axon_off true \
-		--ewma.half_life_days $(ewma_half_life_days) \
+		--ewma.window_days $(ewma_window_days) \
 		--ewma.cutoff_days $(ewma_cutoff_days)

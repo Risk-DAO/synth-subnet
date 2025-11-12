@@ -1,6 +1,21 @@
 import numpy as np
 from properscoring import crps_ensemble
 
+# Define scoring intervals in seconds
+scoring_intervals = {
+    "5min": 300,  # 5 minutes
+    "30min": 1800,  # 30 minutes
+    "3hour": 10800,  # 3 hours
+    "24hour_abs": 86400,  # 24 hours
+}
+
+
+def get_interval_steps(scoring_interval: int, time_increment: int) -> int:
+    """
+    Calculate the number of steps in the given scoring interval based on the time increment.
+    """
+    return int(scoring_interval / time_increment)
+
 
 def calculate_crps_for_miner(
     simulation_runs: np.ndarray,
@@ -19,18 +34,6 @@ def calculate_crps_for_miner(
     Returns:
         float: Sum of total CRPS scores over the intervals.
     """
-    # Define scoring intervals in seconds
-    scoring_intervals = {
-        "5min": 300,  # 5 minutes
-        "30min": 1800,  # 30 minutes
-        "3hour": 10800,  # 3 hours
-        "24hour_abs": 86400,  # 24 hours
-    }
-
-    # Function to calculate interval steps
-    def get_interval_steps(scoring_interval: int, time_increment: int) -> int:
-        return int(scoring_interval / time_increment)
-
     # Initialize lists to store detailed CRPS data
     detailed_crps_data: list[dict] = []
 

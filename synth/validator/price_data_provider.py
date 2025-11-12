@@ -1,6 +1,5 @@
 import logging
 import requests
-from datetime import datetime, timezone
 
 
 from tenacity import (
@@ -12,6 +11,7 @@ from tenacity import (
 import bittensor as bt
 
 
+from synth.db.models import ValidatorRequest
 from synth.utils.helpers import from_iso_to_unix_time
 
 # Pyth API benchmarks doc: https://benchmarks.pyth.network/docs
@@ -36,9 +36,7 @@ class PriceDataProvider:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
-    def fetch_data(
-        self, token: str, start_time: str, time_length: int, transformed=True
-    ):
+    def fetch_data(self, validator_request: ValidatorRequest) -> list[dict]:
         """
         Fetch real prices data from an external REST service.
         Returns an array of time points with prices.
@@ -46,11 +44,13 @@ class PriceDataProvider:
         :return: List of dictionaries with 'time' and 'price' keys.
         """
 
-        start_time_int = from_iso_to_unix_time(start_time)
-        end_time_int = start_time_int + time_length
+        start_time_int = from_iso_to_unix_time(
+            validator_request.start_time.isoformat()
+        )
+        end_time_int = start_time_int + validator_request.time_length
 
         params = {
-            "symbol": self._get_token_mapping(token),
+            "symbol": self._get_token_mapping(validator_request.asset),
             "resolution": 1,
             "from": start_time_int,
             "to": end_time_int,
@@ -61,15 +61,16 @@ class PriceDataProvider:
 
         data = response.json()
 
-        if not transformed:
-            return data
-
-        transformed_data = self._transform_data(data, start_time_int)
+        transformed_data = self._transform_data(
+            data, start_time_int, validator_request.time_increment
+        )
 
         return transformed_data
 
     @staticmethod
-    def _transform_data(data, start_time) -> list[dict]:
+    def _transform_data(
+        data, start_time_int: int, time_increment: int
+    ) -> list:
         if data is None or len(data) == 0:
             return []
 
@@ -78,18 +79,15 @@ class PriceDataProvider:
 
         transformed_data = []
 
+        if len(timestamps) == 0:
+            return []
+
         for t, c in zip(timestamps, close_prices):
             if (
-                t >= start_time and (t - start_time) % 300 == 0
-            ):  # 300s = 5 minutes
-                transformed_data.append(
-                    {
-                        "time": datetime.fromtimestamp(
-                            t, timezone.utc
-                        ).isoformat(),
-                        "price": float(c),
-                    }
-                )
+                t >= start_time_int
+                and (t - start_time_int) % time_increment == 0
+            ):
+                transformed_data.append(float(c))
 
         return transformed_data
 

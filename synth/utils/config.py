@@ -247,24 +247,24 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
-        "--ewma.half_life_days",
-        type=float,
-        help="The half-life in days for the exponential decay.",
-        default=1.0,
+        "--ewma.window_days",
+        type=int,
+        help="The window in days for the rolling average.",
+        default=10,
     )
 
     parser.add_argument(
         "--ewma.cutoff_days",
         type=int,
         help="The number of days against which to run the moving average",
-        default=2,
+        default=10,
     )
 
     parser.add_argument(
         "--softmax.beta",
         type=float,
         help="Negative beta to give higher weight to lower scores.",
-        default=-0.003,
+        default=-0.1,
     )
 
 

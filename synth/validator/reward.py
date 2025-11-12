@@ -25,11 +25,12 @@ import pandas as pd
 import bittensor as bt
 
 
-from synth.utils.helpers import full_fill_real_prices
+from synth.db.models import ValidatorRequest
+from synth.utils.helpers import adjust_predictions, full_fill_real_prices
 from synth.validator.crps_calculation import calculate_crps_for_miner
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
-from synth.validator import response_validation
+from synth.validator import response_validation_v2
 
 
 def reward(
@@ -37,7 +38,7 @@ def reward(
     miner_uid: int,
     time_increment: int,
     validator_request_id: int,
-    real_prices: list[dict],
+    real_prices: list[float],
 ):
     """
     Reward the miner response to the simulation_input request. This method returns a reward
@@ -54,28 +55,23 @@ def reward(
     if miner_prediction is None:
         return -1, [], None
 
-    if miner_prediction.format_validation != response_validation.CORRECT:
+    if miner_prediction.format_validation != response_validation_v2.CORRECT:
         # represents no prediction data from the miner
         return -1, [], miner_prediction
 
     if len(real_prices) == 0:
         return -1, [], miner_prediction
 
-    full_filled_real_prices = full_fill_real_prices(
-        miner_prediction.prediction[0], real_prices
-    )
-
-    predictions_path = [
-        [entry["price"] for entry in sublist]
-        for sublist in miner_prediction.prediction
-    ]
+    predictions_path = adjust_predictions(miner_prediction.prediction)
     simulation_runs = np.array(predictions_path).astype(float)
-    real_price_path = [entry["price"] for entry in full_filled_real_prices]
+    full_filled_real_prices = full_fill_real_prices(
+        miner_prediction.prediction[2], real_prices
+    )
 
     try:
         score, detailed_crps_data = calculate_crps_for_miner(
             simulation_runs,
-            np.array(real_price_path),
+            np.array(full_filled_real_prices),
             time_increment,
         )
     except Exception as e:
@@ -98,8 +94,8 @@ def reward(
 def get_rewards(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
-    validator_request,
-) -> tuple[typing.Optional[np.ndarray], list]:
+    validator_request: ValidatorRequest,
+) -> tuple[typing.Optional[np.ndarray], list, list[dict]]:
     """
     Returns an array of rewards for the given query and responses.
 
@@ -116,18 +112,15 @@ def get_rewards(
     )
 
     if miner_uids is None:
-        return None, []
+        return None, [], []
 
     try:
-        start_time = validator_request.start_time.isoformat()
-        real_prices = price_data_provider.fetch_data(
-            validator_request.asset, start_time, validator_request.time_length
-        )
+        real_prices = price_data_provider.fetch_data(validator_request)
     except Exception as e:
         bt.logging.warning(
             f"Error fetching data for validator request {validator_request.id}: {e}"
         )
-        return None, []
+        return None, [], []
 
     scores = []
     detailed_crps_data_list = []
@@ -151,7 +144,7 @@ def get_rewards(
     )
 
     if prompt_scores is None:
-        return None, []
+        return None, [], []
 
     # gather all the detailed information
     # for log and debug purposes
@@ -174,7 +167,6 @@ def get_rewards(
             ),
             "total_crps": float(score),
             "crps_data": clean_numpy_in_crps_data(crps_data),
-            "real_prices": real_prices,
         }
         for miner_uid, score, crps_data, prompt_score, miner_prediction in zip(
             miner_uids,
@@ -185,7 +177,7 @@ def get_rewards(
         )
     ]
 
-    return prompt_scores, detailed_info
+    return prompt_scores, detailed_info, real_prices
 
 
 def compute_prompt_scores(score_values: np.ndarray):

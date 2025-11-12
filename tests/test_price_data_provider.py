@@ -1,8 +1,18 @@
+from datetime import datetime
 import unittest
 from unittest.mock import patch
 
 
+from synth.db.models import ValidatorRequest
 from synth.validator.price_data_provider import PriceDataProvider
+
+
+validator_request = ValidatorRequest(
+    asset="BTC",
+    start_time=datetime.fromisoformat("2025-02-19T14:12:00+00:00"),
+    time_length=86400,
+    time_increment=300,
+)
 
 
 class TestPriceDataProvider(unittest.TestCase):
@@ -44,20 +54,9 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data(
-                "BTC", "2025-02-19T14:12:00+00:00", 86400
-            )
+            result = self.dataProvider.fetch_data(validator_request)
 
-            assert result == [
-                {
-                    "time": "2025-02-19T14:12:00+00:00",
-                    "price": 100000.23,
-                },
-                {
-                    "time": "2025-02-19T14:17:00+00:00",
-                    "price": 105000.55,
-                },
-            ]
+            assert result == [100000.23, 105000.55]
 
     def test_fetch_data_gap_1(self):
         # 1739974320 - 2025-02-20T14:12:00+00:00
@@ -75,20 +74,9 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data(
-                "BTC", "2025-02-19T14:12:00+00:00", 86400
-            )
+            result = self.dataProvider.fetch_data(validator_request)
 
-            assert result == [
-                {
-                    "time": "2025-02-19T14:12:00+00:00",
-                    "price": 100000.23,
-                },
-                {
-                    "time": "2025-02-19T14:17:00+00:00",
-                    "price": 105000.55,
-                },
-            ]
+            assert result == [100000.23, 105000.55]
 
     def test_fetch_data_gap_2(self):
         # 1739974320 - 2025-02-20T14:12:00+00:00
@@ -106,16 +94,15 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data(
-                "ETH", "2025-02-19T14:12:00+00:00", 86400
+            validator_request_eth = ValidatorRequest(
+                asset="ETH",
+                start_time=datetime.fromisoformat("2025-02-19T14:12:00+00:00"),
+                time_length=86400,
+                time_increment=300,
             )
+            result = self.dataProvider.fetch_data(validator_request_eth)
 
-            assert result == [
-                {
-                    "time": "2025-02-19T14:12:00+00:00",
-                    "price": 100000.23,
-                }
-            ]
+            assert result == [100000.23]
 
     def test_fetch_data_gap_3(self):
         # 1739974320 - 2025-02-20T14:12:00+00:00
@@ -151,20 +138,9 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data(
-                "BTC", "2025-02-19T14:12:00+00:00", 86400
-            )
+            result = self.dataProvider.fetch_data(validator_request)
 
-            assert result == [
-                {
-                    "time": "2025-02-19T14:12:00+00:00",
-                    "price": 100000.23,
-                },
-                {
-                    "time": "2025-02-19T14:22:00+00:00",
-                    "price": 107995.889,
-                },
-            ]
+            assert result == [100000.23, 107995.889]
 
     def test_fetch_data_no_prices(self):
         mock_response: dict = {
@@ -175,9 +151,7 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data(
-                "BTC", "2025-02-19T14:12:00+00:00", 86400
-            )
+            result = self.dataProvider.fetch_data(validator_request)
 
             assert result == []
 
@@ -201,16 +175,9 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data(
-                "BTC", "2025-02-19T14:12:00+00:00", 86400
-            )
+            result = self.dataProvider.fetch_data(validator_request)
 
-            assert result == [
-                {
-                    "time": "2025-02-19T14:22:00+00:00",
-                    "price": 107995.889,
-                }
-            ]
+            assert result == [107995.889]
 
     def test_fetch_data_gap_from_start_2(self):
         # gap        - 2025-02-20T14:12:00+00:00
@@ -254,20 +221,9 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data(
-                "BTC", "2025-02-19T14:12:00+00:00", 86400
-            )
+            result = self.dataProvider.fetch_data(validator_request)
 
-            assert result == [
-                {
-                    "time": "2025-02-19T14:17:00+00:00",
-                    "price": 105000.55,
-                },
-                {
-                    "time": "2025-02-19T14:22:00+00:00",
-                    "price": 107995.889,
-                },
-            ]
+            assert result == [105000.55, 107995.889]
 
     def test_fetch_data_gap_in_the_middle(self):
         # 1739974320 - 2025-02-20T14:12:00+00:00
@@ -314,20 +270,9 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data(
-                "BTC", "2025-02-19T14:12:00+00:00", 86400
-            )
+            result = self.dataProvider.fetch_data(validator_request)
 
-            assert result == [
-                {
-                    "time": "2025-02-19T14:12:00+00:00",
-                    "price": 100000.23,
-                },
-                {
-                    "time": "2025-02-19T14:22:00+00:00",
-                    "price": 105123.345,
-                },
-            ]
+            assert result == [100000.23, 105123.345]
 
     def test_fetch_data_several_values(self):
         # 1739974320 - 2025-02-20T14:12:00+00:00
@@ -376,27 +321,10 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data(
-                "BTC", "2025-02-19T14:12:00+00:00", 86400
-            )
+            result = self.dataProvider.fetch_data(validator_request)
 
-            assert result == [
-                {
-                    "time": "2025-02-19T14:12:00+00:00",
-                    "price": 100000.23,
-                },
-                {
-                    "time": "2025-02-19T14:17:00+00:00",
-                    "price": 105000.55,
-                },
-                {
-                    "time": "2025-02-19T14:22:00+00:00",
-                    "price": 105123.345,
-                },
-            ]
+            assert result == [100000.23, 105000.55, 105123.345]
 
     def test_fetch_data(self):
-        result = self.dataProvider.fetch_data(
-            "BTC", "2025-02-19T14:12:00+00:00", 86400
-        )
+        result = self.dataProvider.fetch_data(validator_request)
         print("result", result)

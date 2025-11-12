@@ -30,8 +30,9 @@ from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
     timeout_until,
+    more_paths_launch_time,
 )
-from synth.utils.logging import setup_gcp_logging, setup_slack_alert
+from synth.utils.logging import setup_gcp_logging
 from synth.utils.opening_hours import should_skip_xau
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
@@ -60,7 +61,6 @@ class Validator(BaseValidatorNeuron):
         super(Validator, self).__init__(config=config)
 
         setup_gcp_logging(self.config.gcp.log_id_prefix)
-        setup_slack_alert(self.config.gcp.log_id_prefix)
 
         bt.logging.info("load_state()")
         self.load_state()
@@ -95,7 +95,7 @@ class Validator(BaseValidatorNeuron):
                 num_simulations=100,
             ),
         ]
-        self.timeout_extra_seconds = 120
+        self.timeout_extra_seconds = 60
 
         self.assert_assets_supported()
 
@@ -179,6 +179,11 @@ class Validator(BaseValidatorNeuron):
             # add the start time to the simulation input
             simulation_input.start_time = start_time.isoformat()
 
+            # TEMP
+            if request_time >= more_paths_launch_time:
+                simulation_input.num_simulations = 1000
+            # END TEMP
+
             await query_available_miners_and_save_responses(
                 base_neuron=self,
                 miner_data_handler=self.miner_data_handler,
@@ -192,10 +197,9 @@ class Validator(BaseValidatorNeuron):
             )
 
     async def forward_score(self):
-        # getting current time
         current_time = get_current_time()
 
-        next_iteration = current_time + timedelta(hours=1)
+        next_iteration = current_time + timedelta(minutes=15)
 
         async def wait_till_next_iteration():
             # wait until the next iteration
@@ -250,7 +254,7 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
             scored_time=scored_time,
             cutoff_days=self.config.ewma.cutoff_days,
-            half_life_days=self.config.ewma.half_life_days,
+            window_days=self.config.ewma.window_days,
             softmax_beta=self.config.softmax.beta,
         )
 
@@ -262,6 +266,24 @@ class Validator(BaseValidatorNeuron):
         # Send rewards calculated in the previous step
         # into bittensor consensus calculation
         # ========================================== #
+
+        moving_averages_data.append(
+            {
+                "miner_id": 0,
+                "miner_uid": (
+                    23 if self.config.subtensor.network == "test" else 248
+                ),
+                "smoothed_score": 0,
+                "reward_weight": sum(
+                    [r["reward_weight"] for r in moving_averages_data]
+                ),
+                "updated_at": scored_time.isoformat(),
+            }
+        )
+
+        bt.logging.info(
+            f"Moving averages data for owner: {moving_averages_data[-1]}"
+        )
 
         send_weights_to_bittensor_and_update_weights_history(
             base_neuron=self,

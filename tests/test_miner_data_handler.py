@@ -5,7 +5,7 @@ from sqlalchemy import Engine, select, delete
 from sqlalchemy.dialects.postgresql import insert
 
 from synth.db.models import MinerPrediction, ValidatorRequest, Miner
-from synth.validator import response_validation
+from synth.validator import response_validation_v2
 from synth.simulation_input import SimulationInput
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
@@ -50,7 +50,9 @@ def test_get_values_within_range(db_engine: Engine):
     )
 
     values = generate_values(datetime.fromisoformat(start_time))
-    simulation_data = {miner_uid: (values, response_validation.CORRECT, "12")}
+    simulation_data = {
+        miner_uid: (values, response_validation_v2.CORRECT, "12")
+    }
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
@@ -102,7 +104,9 @@ def test_get_values_ongoing_range(db_engine: Engine):
     )
 
     values = generate_values(datetime.fromisoformat(start_time))
-    simulation_data = {miner_uid: (values, response_validation.CORRECT, "12")}
+    simulation_data = {
+        miner_uid: (values, response_validation_v2.CORRECT, "12")
+    }
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
@@ -158,7 +162,7 @@ def test_multiple_records_for_same_miner(db_engine: Engine):
 
     values_1 = generate_values(datetime.fromisoformat(start_time_1))
     simulation_data_1 = {
-        miner_uid: (values_1, response_validation.CORRECT, "12")
+        miner_uid: (values_1, response_validation_v2.CORRECT, "12")
     }
     handler.save_responses(
         simulation_data_1, simulation_input_1, datetime.now()
@@ -166,7 +170,7 @@ def test_multiple_records_for_same_miner(db_engine: Engine):
 
     values_2 = generate_values(datetime.fromisoformat(start_time_2))
     simulation_data_2 = {
-        miner_uid: (values_2, response_validation.CORRECT, "12")
+        miner_uid: (values_2, response_validation_v2.CORRECT, "12")
     }
     handler.save_responses(
         simulation_data_2, simulation_input_2, datetime.now()
@@ -176,6 +180,8 @@ def test_multiple_records_for_same_miner(db_engine: Engine):
     assert len(validator_requests) == 2
 
     result = handler.get_miner_prediction(miner_uid, validator_requests[1].id)
+
+    assert result is not None
 
     prediction = result.prediction
 
@@ -238,7 +244,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine: Engine):
 
     values_1 = generate_values(datetime.fromisoformat(start_time_1))
     simulation_data_1 = {
-        miner_uid: (values_1, response_validation.CORRECT, "12")
+        miner_uid: (values_1, response_validation_v2.CORRECT, "12")
     }
     handler.save_responses(
         simulation_data_1, simulation_input_1, datetime.now()
@@ -246,7 +252,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine: Engine):
 
     values_2 = generate_values(datetime.fromisoformat(start_time_2))
     simulation_data_2 = {
-        miner_uid: (values_2, response_validation.CORRECT, "12")
+        miner_uid: (values_2, response_validation_v2.CORRECT, "12")
     }
     handler.save_responses(
         simulation_data_2, simulation_input_2, datetime.now()
@@ -338,7 +344,7 @@ def test_set_get_scores(db_engine: Engine):
 
     assert len(validator_requests) == 1
 
-    prompt_scores, detailed_info = get_rewards(
+    prompt_scores, detailed_info, real_prices = get_rewards(
         handler,
         price_data_provider,
         validator_requests[0],
@@ -347,7 +353,7 @@ def test_set_get_scores(db_engine: Engine):
     assert prompt_scores is not None
 
     handler.set_miner_scores(
-        reward_details=detailed_info, scored_time=scored_time
+        real_prices, validator_requests[0].id, detailed_info, scored_time
     )
 
     miner_scores_df = handler.get_miner_scores(

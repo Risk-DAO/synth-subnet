@@ -18,6 +18,7 @@ from sqlalchemy import (
     func,
     desc,
     not_,
+    update,
 )
 from sqlalchemy.dialects.postgresql import insert
 from tenacity import (
@@ -39,7 +40,7 @@ from synth.db.models import (
     WeightsUpdateHistory,
 )
 from synth.simulation_input import SimulationInput
-from synth.validator import response_validation
+from synth.validator import response_validation_v2
 
 
 class MinerDataHandler:
@@ -139,7 +140,7 @@ class MinerDataHandler:
                                 "prediction": (
                                     prediction
                                     if format_validation
-                                    == response_validation.CORRECT
+                                    == response_validation_v2.CORRECT
                                     else []
                                 ),
                                 "format_validation": format_validation,
@@ -166,11 +167,34 @@ class MinerDataHandler:
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
     def set_miner_scores(
-        self, reward_details: list[dict], scored_time: datetime
+        self,
+        real_prices: list[dict],
+        validator_requests_id: int,
+        reward_details: list[dict],
+        scored_time: datetime,
     ):
         try:
             with self.engine.connect() as connection:
                 with connection.begin():
+                    # update validator request with the real paths
+                    if real_prices is not None and len(real_prices) > 0:
+                        # replace np.nan with None
+                        for price in real_prices:
+                            if price is not None and pd.isna(price):
+                                price = None
+                        update_stmt_validator = (
+                            update(ValidatorRequest)
+                            .where(
+                                ValidatorRequest.id == validator_requests_id
+                            )
+                            .values(
+                                {
+                                    "real_prices": real_prices,
+                                }
+                            )
+                        )
+                        connection.execute(update_stmt_validator)
+
                     rows_to_insert = []
                     for row in reward_details:
                         rows_to_insert.append(
@@ -188,7 +212,6 @@ class MinerDataHandler:
                                     "crps_data": row["crps_data"],
                                 },
                                 "prompt_score_v3": row["prompt_score_v3"],
-                                "real_prices": row["real_prices"],
                             }
                         )
                     insert_stmt_miner_scores = (
@@ -205,7 +228,6 @@ class MinerDataHandler:
                                     "crps_data": row["crps_data"],
                                 },
                                 "prompt_score_v3": row["prompt_score_v3"],
-                                "real_prices": row["real_prices"],
                             },
                         )
                     )
@@ -248,7 +270,9 @@ class MinerDataHandler:
             traceback.print_exc(file=sys.stderr)
             return None
 
-    def get_miner_prediction(self, miner_uid: int, validator_request_id: int):
+    def get_miner_prediction(
+        self, miner_uid: int, validator_request_id: int
+    ) -> typing.Optional[MinerPrediction]:
         """Retrieve the record with the longest valid interval for the given miner_id."""
         try:
             with self.engine.connect() as connection:
@@ -272,7 +296,13 @@ class MinerDataHandler:
                     .limit(1)
                 )
 
-                result = connection.execute(query).fetchone()
+                result = MinerPrediction()
+                row = connection.execute(query).fetchone()
+                if row is not None:
+                    result.id = row.id
+                    result.prediction = row.prediction
+                    result.format_validation = row.format_validation
+                    result.process_time = row.process_time
 
             return result
         except Exception as e:
@@ -286,7 +316,7 @@ class MinerDataHandler:
         self,
         scored_time: datetime,
         cutoff_days: int,
-    ):
+    ) -> typing.Optional[list[ValidatorRequest]]:
         """
         Retrieve the list of IDs of the latest validator requests that (start_time + time_length) < scored_time
         and (start_time + time_length) >= scored_time - cutoff_days.
@@ -344,7 +374,17 @@ class MinerDataHandler:
                     .order_by(ValidatorRequest.start_time.asc())
                 )
 
-                return connection.execute(query).fetchall()
+                results: list[ValidatorRequest] = []
+                for row in connection.execute(query).fetchall():
+                    vr = ValidatorRequest()
+                    vr.id = row.id
+                    vr.start_time = row.start_time
+                    vr.asset = row.asset
+                    vr.time_length = row.time_length
+                    vr.time_increment = row.time_increment
+                    results.append(vr)
+
+                return results
         except Exception as e:
             bt.logging.error(
                 f"in get_latest_prediction_request (got an exception): {e}"
@@ -412,11 +452,17 @@ class MinerDataHandler:
                         MinerScore.prompt_score_v3,
                         MinerScore.scored_time,
                         MinerScore.score_details_v3,
+                        ValidatorRequest.asset,
                     )
                     .select_from(MinerScore)
                     .join(
                         MinerPrediction,
                         MinerPrediction.id == MinerScore.miner_predictions_id,
+                    )
+                    .join(
+                        ValidatorRequest,
+                        ValidatorRequest.id
+                        == MinerPrediction.validator_requests_id,
                     )
                     .where(MinerScore.scored_time > min_scored_time)
                 )

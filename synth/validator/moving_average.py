@@ -13,130 +13,176 @@ from synth.validator.reward import compute_softmax
 
 
 def prepare_df_for_moving_average(df):
-    """
-    Prepare the input dataframe for the moving average computation.
-
-    If a miner misses a prompt or has recently joined the network, we backfill
-    the prompt_score_v3 and score_details_v3.
-
-    To determine if a miner has missed a prompt, we check if the miner has a record
-    at the global_min timestamp. If not, we assume the miner has missed the prompt.
-
-    :param df: The input dataframe.
-    :return: The prepared dataframe.
-    """
+    df = df.copy()
     df["scored_time"] = pd.to_datetime(df["scored_time"])
 
-    # Determine the global minimum scored_time and the complete (global) set of times.
+    # 1) compute globals
     global_min = df["scored_time"].min()
     all_times = sorted(df["scored_time"].unique())
 
-    # Create a global mapping for each scored_time to the corresponding worst prompt score.
-    # Here we simply pick (for each timestamp) the percentile90 and the lowest_score from the first row encountered.
+    # build your global‐worst‐score mappings exactly as you had them
     global_worst_score_mapping = {}
     global_score_details_mapping = {}
+    global_score_asset_mapping = {}
     for t in all_times:
-        sample_row = df.loc[df["scored_time"] == t].iloc[0]
-        if sample_row["score_details_v3"] is None:
+        sample = df.loc[df["scored_time"] == t].iloc[0]
+        details = sample["score_details_v3"]
+        if details is None:
             continue
         global_worst_score_mapping[t] = (
-            sample_row["score_details_v3"]["percentile90"]
-            - sample_row["score_details_v3"]["lowest_score"]
+            details["percentile90"] - details["lowest_score"]
         )
-        global_score_details_mapping[t] = sample_row["score_details_v3"]
+        global_score_details_mapping[t] = details
+        global_score_asset_mapping[t] = sample["asset"]
 
-    def fill_missing_for_miner(group):
-        miner_min = group["scored_time"].min()
+    # 2) find, for each miner, when they first appear
+    miner_first = (
+        df.groupby("miner_id")["scored_time"]
+        .min()
+        .rename("miner_min")
+        .reset_index()
+    )
 
-        # We assume the miner is missing data if they did not start at the global_min.
-        if miner_min > global_min:
-            # Reindex using the full range of times
-            new_index = pd.Index(all_times, name="scored_time")
-            group = group.set_index("scored_time")
-            group = group.reindex(new_index)
+    # 3) build the full cartesian product of miner_id × all_times
+    miners = df[["miner_id"]].drop_duplicates()
+    full = (
+        miners.assign(_tmp=1)
+        .merge(pd.DataFrame({"scored_time": all_times, "_tmp": 1}), on="_tmp")
+        .drop(columns="_tmp")
+    )
 
-            # Fill in miner_id (assumed constant for the miner)
-            group["miner_id"] = group["miner_id"].ffill().bfill().astype(int)
+    # 4) left‐merge the real data onto that grid
+    full = full.merge(df, on=["miner_id", "scored_time"], how="left").merge(
+        miner_first, on="miner_id", how="left"
+    )
 
-            # For missing prompt_score_v3, use the corresponding worst_score from the mapping.
-            # Note: group.index is the scored_time.
-            group["prompt_score_v3"] = group["prompt_score_v3"].fillna(
-                group.index.to_series().map(global_worst_score_mapping)
-            )
+    # 5) now vectorize the “new‐miner” backfill logic:
+    is_new = full["miner_min"] > global_min
 
-            # Fill in score_details_v3:
-            group["score_details_v3"] = [
-                global_score_details_mapping.get(t) for t in group.index
-            ]
+    # backfill prompt_score_v3 for new miners
+    full.loc[is_new, "prompt_score_v3"] = full.loc[
+        is_new, "prompt_score_v3"
+    ].fillna(full.loc[is_new, "scored_time"].map(global_worst_score_mapping))
 
-            group = group.reset_index()
-        return group
+    # overwrite score_details_v3 for new miners
+    full.loc[is_new, "score_details_v3"] = full.loc[is_new, "scored_time"].map(
+        global_score_details_mapping
+    )
 
-    df = df.groupby("miner_id", group_keys=False).apply(fill_missing_for_miner)
-    df = df.sort_values(by=["scored_time", "miner_id"])
+    # overwrite asset for new miners
+    full.loc[is_new, "asset"] = full.loc[is_new, "scored_time"].map(
+        global_score_asset_mapping
+    )
 
-    return df
+    # 6) drop the “fake” rows we only introduced for existing miners
+    is_old = full["miner_min"] == global_min
+    was_missing = (
+        full["prompt_score_v3"].isna() & full["score_details_v3"].isna()
+    )
+    mask_drop = is_old & was_missing
+    out = full.loc[
+        ~mask_drop,
+        [
+            "scored_time",
+            "miner_id",
+            "prompt_score_v3",
+            "score_details_v3",
+            "asset",
+        ],
+    ]
+
+    # 7) clean up types & sort
+    out["miner_id"] = out["miner_id"].astype(int)
+    out = out.sort_values(["scored_time", "miner_id"]).reset_index(drop=True)
+    return out
 
 
-def compute_weighted_averages(
+def apply_per_asset_coefficients(
+    df: DataFrame,
+) -> DataFrame:
+    # Define coefficients for each asset
+    asset_coefficients = {
+        "BTC": 1.0,
+        "ETH": 0.6210893136676585,
+        "XAU": 1.4550630831254674,
+        "SOL": 0.5021491038021751,
+    }
+
+    sum_coefficients = 0.0
+
+    for asset, coef in asset_coefficients.items():
+        df.loc[df["asset"] == asset, "prompt_score_v3"] *= coef
+        sum_coefficients += coef * len(df.loc[df["asset"] == asset])
+
+    df["prompt_score_v3"] /= sum_coefficients
+
+    return df["prompt_score_v3"]
+
+
+def compute_smoothed_score(
     miner_data_handler: MinerDataHandler,
     input_df: DataFrame,
-    half_life_days: float,
+    window_days: int,
     scored_time: datetime,
     softmax_beta: float,
 ) -> typing.Optional[list[dict]]:
-    """
-    Computes an exponentially weighted
-    moving average (EWMA) with a user-specified half-life, then outputs:
-      1) The EWMA of each miner's reward
-      2) Softmax of the EWMA to get the reward scores
-
-    :param input_df: Dataframe of miner rewards.
-    :param half_life_days: The half-life in days for the exponential decay.
-    :param scored_time_str: The current time when validator does the scoring.
-    """
     if input_df.empty:
         return None
 
     # Group by miner_id
     grouped = input_df.groupby("miner_id")
 
-    results = []  # will hold dict with miner_id and ewma
+    rolling_avg_data = []  # will hold dict with miner_id and rolling average
 
     for miner_id, group_df in grouped:
-        total_weight = 0.0
-        weighted_reward_sum = 0.0
+        # Ensure scored_time is datetime and sort
+        group_df = group_df.copy()
+        group_df["scored_time"] = pd.to_datetime(group_df["scored_time"])
+        group_df = group_df.sort_values("scored_time")
 
-        for _, row in group_df.iterrows():
-            prompt_score = row["prompt_score_v3"]
-            if prompt_score is None or np.isnan(prompt_score):
-                continue
-
-            w = compute_weight(row["scored_time"], scored_time, half_life_days)
-            total_weight += w
-            weighted_reward_sum += w * prompt_score
-
-        ewma = (
-            weighted_reward_sum / total_weight
-            if total_weight > 0
-            else float("inf")
+        # Only consider rows within the last 10 days from scored_time
+        min_time = scored_time - pd.Timedelta(days=window_days)
+        mask = (group_df["scored_time"] > min_time) & (
+            group_df["scored_time"] <= scored_time
         )
-        results.append({"miner_id": miner_id, "ewma": ewma})
+        window_df = group_df.loc[mask]
+
+        # Drop NaN prompt_score_v3
+        valid_scores = window_df[["prompt_score_v3", "asset"]].dropna()
+
+        # Apply per-asset coefficients
+        window_df = apply_per_asset_coefficients(valid_scores)
+
+        if not window_df.empty:
+            rolling_avg = float(window_df.sum())
+        else:
+            bt.logging.warning(
+                f"Miner ID {miner_id} has no valid scores in the window. Assigning infinite rolling average."
+            )
+            rolling_avg = float("inf")
+
+        rolling_avg_data.append(
+            {"miner_id": miner_id, "rolling_avg": rolling_avg}
+        )
 
     # Add the miner UID to the results
     moving_averages_data = miner_data_handler.populate_miner_uid_in_miner_data(
-        results
+        rolling_avg_data
     )
 
     # Filter out None UID
-    filtered_moving_averages_data = []
+    filtered_moving_averages_data: list[dict] = []
     for item in moving_averages_data:
         if item["miner_uid"] is not None:
             filtered_moving_averages_data.append(item)
 
     # Now compute soft max to get the reward_scores
-    ewma_list = [r["ewma"] for r in filtered_moving_averages_data]
-    reward_weight_list = compute_softmax(np.array(ewma_list), softmax_beta)
+    rolling_avg_list = [
+        r["rolling_avg"] for r in filtered_moving_averages_data
+    ]
+    reward_weight_list = compute_softmax(
+        np.array(rolling_avg_list), softmax_beta
+    )
 
     rewards = []
     for item, reward_weight in zip(
@@ -148,27 +194,13 @@ def compute_weighted_averages(
                 {
                     "miner_id": item["miner_id"],
                     "miner_uid": item["miner_uid"],
-                    "smoothed_score": item["ewma"],
+                    "smoothed_score": item["rolling_avg"],
                     "reward_weight": float(reward_weight),
                     "updated_at": scored_time.isoformat(),
                 }
             )
 
     return rewards
-
-
-def compute_weight(
-    scored_dt: datetime, validation_time: datetime, half_life_days: float
-) -> float:
-    """
-    For a row with timestamp scored_dt, the age in days is delta_days.
-    weight = 0.5^(delta_days / half_life_days), meaning that
-    after 'half_life_days' days, the weight decays to 0.5.
-    """
-    delta_days = (validation_time - scored_dt).total_seconds() / (
-        24.0 * 3600.0
-    )
-    return 0.5 ** (delta_days / half_life_days)
 
 
 def print_rewards_df(moving_averages_data):
