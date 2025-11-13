@@ -61,6 +61,15 @@ class Miner(BaseMinerNeuron):
             hot_key=hot_key
         )
 
+        bt.logging.info(
+            f"num simulations {simulation_input.num_simulations}"
+        )
+
+        bt.logging.info(
+            str(synapse.simulation_output)
+        )
+        
+
         return synapse
 
     async def blacklist(self, synapse: Simulation) -> typing.Tuple[bool, str]:
