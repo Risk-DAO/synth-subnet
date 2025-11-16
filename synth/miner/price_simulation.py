@@ -172,7 +172,7 @@ def simulate_price_path_student_t(S0, time_increment, time_length, sigma_hourly,
     
     hours_in_year = 365.0 * 24.0
     sigma_atm = sigma_hourly * np.sqrt(hours_in_year)
-    num_steps = int(time_length / time_increment)
+    num_steps = int(time_length / time_increment) + 1
     ST, R = sample_student_t_multistep(S0, sigma_atm, T=1/365, nu=nu, n_paths=1, n_steps=num_steps)
 
     return ST[0]
